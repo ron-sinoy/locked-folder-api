@@ -1,7 +1,6 @@
 // server.js
 require('dotenv').config();
-const cors = require("cors");
-app.use(cors());
+
 
 const express = require('express');
 const multer = require('multer');
@@ -9,6 +8,8 @@ const createDriveClient = require('./drive');
 console.log("DEBUG createDriveClient =", createDriveClient);
 
 const app = express();
+const cors = require("cors");
+app.use(cors());
 const upload = multer({ storage: multer.memoryStorage() });
 
 const drive = createDriveClient();

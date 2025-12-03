@@ -137,6 +137,15 @@ app.post('/files/:fileId/download', async (req, res) => {
     res.status(500).json({ error: 'Internal error downloading file' });
   }
 });
+app.post("/auth/check", (req, res) => {
+  const { pin } = req.body;
+
+  if (pin === LOCK_PIN) {
+    return res.json({ valid: true });
+  }
+
+  return res.json({ valid: false });
+});
 
 // ----- START SERVER -----
 app.listen(PORT, () => {

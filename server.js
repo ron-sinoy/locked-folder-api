@@ -48,20 +48,30 @@ app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'Locked folder API running' });
 });
 
-// List files in locked folder (PIN required)
-app.post('/files/list', async (req, res) => {
+app.post("/files/list", async (req, res) => {
   try {
-    if (!checkPin(req, res)) return;
+    const { pin } = req.body;
+
+    if (pin !== LOCK_PIN) {
+      return res.status(403).json({ error: "Invalid PIN" });
+    }
 
     const response = await drive.files.list({
       q: `'${LOCKED_FOLDER_ID}' in parents and trashed = false`,
-      fields: 'files(id, name, mimeType, createdTime, size)',
+      fields: "files(id, name)"
     });
 
-    res.json({ files: response.data.files || [] });
+    const files = response.data.files.map((file) => ({
+      id: file.id,
+      name: file.name,
+      viewUrl: `https://drive.google.com/uc?export=view&id=${file.id}`
+    }));
+
+    return res.json({ files });
+
   } catch (err) {
-    console.error('Error listing files:', err.message || err);
-    res.status(500).json({ error: 'Internal error listing files' });
+    console.error("Error listing files:", err);
+    return res.status(500).json({ error: "Internal error listing files" });
   }
 });
 
@@ -84,11 +94,12 @@ app.post('/files/upload', upload.single('file'), async (req, res) => {
       body: Buffer.from(req.file.buffer),
     };
 
-    const response = await drive.files.create({
-      resource: fileMetadata,
-      media,
-      fields: 'id, name, mimeType',
-    });
+const files = response.data.files.map((file) => ({
+  id: file.id,
+  name: file.name,
+  viewUrl: `https://drive.google.com/uc?export=view&id=${file.id}`
+}));
+
 
     res.status(201).json({
       message: 'File uploaded',
